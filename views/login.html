@@ -1,0 +1,15 @@
+{% extends './layout.html' %}
+{% block title %}console{% endblock %}
+{% block content %}
+    <div>
+       <p>123</p>
+       <button id="click">click</button>
+    </div>
+    <script>
+        $(function(){
+          $("#click").click(function(){
+            window.location.href = "api/getaccept"
+          })
+        })
+    </script>
+{% endblock %}

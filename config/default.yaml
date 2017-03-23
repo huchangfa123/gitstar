@@ -1,0 +1,6 @@
+Database:
+  name: userData
+  host: localhost
+  port: 27017
+  dialect: mongodb
+  

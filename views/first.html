@@ -1,0 +1,24 @@
+{% extends './layout.html' %}
+{% block title %}console{% endblock %}
+{% block content %}
+    <div>
+       <p>123</p>
+       <button id = "getuser">getuser</button>
+    </div>
+    <script>
+        $(function(){
+            let URL = document.URL
+            let data = URL.split('?')[1]
+            let code = data.split('&')[0].split('=')[1]    
+            $("#getuser").click(function(){
+                $.post('api/getstar', {             
+                    code: code
+                }, function(data, status){
+                    if(status){
+                        alert('success')
+                    }
+                })
+            })
+        })
+    </script>
+{% endblock %}
