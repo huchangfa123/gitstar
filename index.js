@@ -9,10 +9,17 @@ const dataRouter = require('./routes/getdatarouter')
 const session = require('koa-session')
 const sessionConfig = require('./config/session')
 const cors = require('kcors')
-require('./lib/database')
+const databaseConfig = require('config').get('Database')
+const mongoose = require('mongoose')
 
 const app = new Koa()
 const router = new Route()
+
+// 创建数据库连接
+mongoose.Promise = require('bluebird')
+const url = `mongodb://${databaseConfig.host}:${databaseConfig.port}/${databaseConfig.name}`
+console.log(url)
+mongoose.connect(url)
 
 app.use(cors())
 app.use(serve(path.join(__dirname, 'static')))
