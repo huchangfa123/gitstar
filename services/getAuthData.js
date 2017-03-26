@@ -100,8 +100,7 @@ exports.updatestar = async (username) => {
         {
           $push: {
             'Starlist': {
-              pjname: stars[i].name,
-              tag: []
+              pjname: stars[i].name
             }
           }
         })
@@ -117,6 +116,60 @@ exports.getstar = async (username) => {
   return stars
 }
 
-// exports.settap = async () => {
+// 设置项目的标签
+exports.settag = async (id, name, ntag) => {
+  // 找出项目对应的tag列表
+  const result = await Model.Tags.find({
+    StarpjId: id,
+    UserName: name
+  })
+  // 对项目的tag列表进行更新查重
+  if (result) {
+    let checkSame = false
+    for (let i = 0; i < result[0].TagList.length; i++) {
+      if (result[0].TagList[i].TagName === ntag) { checkSame = true }
+    }
+    if (!checkSame) {
+      await Model.Tags.update({StarpjId: id, UserName: name}, {
+        $push: {
+          'TagList': {TagName: ntag}
+        }
+      })
+    }
+  }
+  // 找出用户对应的tag列表进行更多新查重
+  const userresult = await Model.User.find({
+    name: name
+  })
+  if (userresult) {
+    let checkSam = false
+    for (let i = 0; i < userresult[0].taglist.length; i++) {
+      if (userresult[0].taglist[i].TagName === ntag) { checkSam = true }
+    }
+    if (!checkSam) {
+      await Model.User.update({name: name}, {
+        $push: {
+          'taglist': {TagName: ntag}
+        }
+      })
+    }
+  }
+}
 
-// }
+// 获取项目标签
+exports.gettag = async(id, name) => {
+  let result = await Model.Tags.findOne({
+    StarpjId: id,
+    UserName: name
+  })
+  if (!result) {
+    const TagEntity = new Model.Tags({
+      UserName: name,
+      StarpjId: id,
+      TagList: []
+    })
+    await TagEntity.save()
+    result = TagEntity
+  }
+  return result
+}
