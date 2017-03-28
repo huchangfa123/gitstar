@@ -157,19 +157,51 @@ exports.settag = async (id, name, ntag) => {
 }
 
 // 获取项目标签
-exports.gettag = async(id, name) => {
+exports.gettag = async(id, name, pjname) => {
   let result = await Model.Tags.findOne({
     StarpjId: id,
-    UserName: name
+    UserName: name,
+    Pjname: pjname
   })
   if (!result) {
     const TagEntity = new Model.Tags({
       UserName: name,
+      PjName: pjname,
       StarpjId: id,
       TagList: []
     })
     await TagEntity.save()
     result = TagEntity
+  }
+  return result
+}
+
+// 获取用户标签
+exports.getusertag = async(name) => {
+  const result = await Model.User.findOne({
+    name: name
+  })
+  const usertaglist = result.taglist
+  return usertaglist
+}
+
+// 根据标签获取项目
+exports.getpjBytag = async(name, tag) => {
+  let result = []
+  const allpj = await Model.Tags.find({
+    UserName: name
+  })
+  console.log(allpj)
+  for (let i = 0; i < allpj.length; i++) {
+    for (let j = 0; j < allpj[i].TagList.length; j++) {
+      if (allpj[i].TagList[j].TagName === tag) {
+        result.push({
+          pjname: allpj[i].PjName,
+          pjtags: allpj[i].TagList
+        })
+        break
+      }
+    }
   }
   return result
 }
