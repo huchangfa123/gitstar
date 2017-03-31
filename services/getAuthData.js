@@ -59,6 +59,7 @@ exports.getUser = async (token) => {
     const UserEntity = new Model.User({
       name: data.login,
       email: data.email,
+      avatar: data.avatar_url,
       taglist: []
     })
     await UserEntity.save()
@@ -84,7 +85,7 @@ exports.updatestar = async (username) => {
   }
   await req(options)
           .then((repos) => {
-            // console.log(repos)
+            console.log(repos)
             stars = repos
           })
           .catch((err) => {
@@ -100,7 +101,11 @@ exports.updatestar = async (username) => {
         {
           $push: {
             'Starlist': {
-              pjname: stars[i].name
+              pjname: stars[i].name,
+              language: stars[i].language,
+              stargazers: stars[i].stargazers_count,
+              intro: stars[i].description,
+              pjurl: stars[i].html_url
             }
           }
         })
@@ -161,7 +166,7 @@ exports.gettag = async(id, name, pjname) => {
   let result = await Model.Tags.findOne({
     StarpjId: id,
     UserName: name,
-    Pjname: pjname
+    PjName: pjname
   })
   if (!result) {
     const TagEntity = new Model.Tags({
@@ -176,6 +181,26 @@ exports.gettag = async(id, name, pjname) => {
   return result
 }
 
+// 删除项目标签
+exports.deletetag = async(id, name, tag) => {
+  await Model.Tags.update({
+    UserName: name,
+    StarpjId: id
+  }, {
+    $pull: {
+      'TagList': {TagName: tag}
+    }
+  })
+
+  await Model.User.update({name: name}, {
+    $pull: {
+      'taglist': {
+        TagName: tag
+      }
+    }
+  })
+}
+
 // 获取用户标签
 exports.getusertag = async(name) => {
   const result = await Model.User.findOne({
@@ -183,6 +208,25 @@ exports.getusertag = async(name) => {
   })
   const usertaglist = result.taglist
   return usertaglist
+}
+
+// 获取最近用户标签
+exports.getrecenttag = async(name) => {
+  const allresult = await Model.User.findOne({
+    name: name
+  })
+  const result = []
+  let count = 5
+  for (let i = allresult.taglist.length - 1; i >= 0; i--) {
+    // console.log(allresult.taglist[i])
+    result.push({
+      index: count % 5,
+      tagname: allresult.taglist[i].TagName
+    })
+    count--
+    if (count === 0) break
+  }
+  return result
 }
 
 // 根据标签获取项目

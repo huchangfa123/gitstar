@@ -15,7 +15,13 @@ router.get('api/getaccept', async (ctx, next) => {
   const baseurl = 'https://github.com/login/oauth/authorize?'
   const scope = 'scope=user%20public_repo%20notifications&'
   const url = `${baseurl}client_id=4f1c8132a1b559d5d9aa&${scope}state=5486545`
-  await ctx.redirect(url)
+  // await ctx.redirect(url)
+  ctx.body = {
+    success: true,
+    data: {
+      url
+    }
+  }
 })
 
 router.post('api/getstar', async (ctx, next) => {
@@ -26,7 +32,7 @@ router.post('api/getstar', async (ctx, next) => {
   const data = await getAuthData.getUser(token)
   const username = data.login
   // 更新star项目表
-  await getAuthData.updatestar(username)
+  // await getAuthData.updatestar(username)
   // 获取star项目表
   const stars = await getAuthData.getstar(username)
   let result = []
@@ -37,7 +43,13 @@ router.post('api/getstar', async (ctx, next) => {
     const tag = await getAuthData.gettag(id, username, pjname)
     result.push({
       pjname: tag.PjName,
-      tag: tag.TagList
+      tag: tag.TagList,
+      language: stars[0].Starlist[i].language,
+      stargazers: stars[0].Starlist[i].stargazers,
+      intro: stars[0].Starlist[i].intro,
+      url: stars[0].Starlist[i].pjurl,
+      index: i,
+      id: id
     })
   }
   ctx.body = {
@@ -48,10 +60,40 @@ router.post('api/getstar', async (ctx, next) => {
   }
 })
 // 设置标签
-router.get('api/set', async (ctx, next) => {
+router.post('api/set', async (ctx, next) => {
   const name = 'huchangfa123'
-  const id = '58d8ff872ed03c201a50dce5'
-  const result = await getAuthData.settag(id, name, 'youli')
+  const id = ctx.request.body.id
+  const tag = ctx.request.body.tag
+  await getAuthData.settag(id, name, tag)
+  ctx.body = {
+    success: true,
+    message: 'success',
+    tag: {
+      tagname: tag
+    }
+  }
+})
+
+// 删除标签
+router.post('api/deletetag', async (ctx, next) => {
+  const name = 'huchangfa123'
+  const id = ctx.request.body.id
+  const tag = ctx.request.body.tag
+  console.log('id:' + id)
+  console.log('tag:' + tag)
+  // const id = '58db781eb21bca36ee9eeb1a'
+  // const tag = 'javascript'
+  await getAuthData.deletetag(id, name, tag)
+  ctx.body = {
+    success: true,
+    message: 'delete success!'
+  }
+})
+
+// 获取用户标签
+router.get('api/gettag', async(ctx, next) => {
+  const user = 'huchangfa123'
+  const result = await getAuthData.getusertag(user)
   ctx.body = {
     success: true,
     data: {
@@ -60,10 +102,11 @@ router.get('api/set', async (ctx, next) => {
   }
 })
 
-// 获取用户标签
-router.get('api/gettag', async(ctx, next) => {
+// 获取用户最近标签
+router.get('api/getrecenttag', async(ctx, next) => {
   const user = 'huchangfa123'
-  const result = await getAuthData.getusertag(user)
+  const result = await getAuthData.getrecenttag(user)
+  console.log(result)
   ctx.body = {
     success: true,
     data: {
