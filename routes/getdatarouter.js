@@ -32,7 +32,7 @@ router.post('api/getstar', async (ctx, next) => {
   const data = await getAuthData.getUser(token)
   const username = data.login
   // 更新star项目表
-  // await getAuthData.updatestar(username)
+  await getAuthData.updatestar(username)
   // 获取star项目表
   const stars = await getAuthData.getstar(username)
   let result = []
@@ -64,12 +64,17 @@ router.post('api/set', async (ctx, next) => {
   const name = 'huchangfa123'
   const id = ctx.request.body.id
   const tag = ctx.request.body.tag
-  await getAuthData.settag(id, name, tag)
+  const color = ctx.request.body.color
+  // const id = '58e4d62a63fb5229d5d0667d'
+  // const tag = 'koa'
+  // const color = '#652315'
+  await getAuthData.settag(id, name, tag, color)
   ctx.body = {
     success: true,
     message: 'success',
     tag: {
-      tagname: tag
+      tagname: tag,
+      tagcolor: color
     }
   }
 })
@@ -79,10 +84,10 @@ router.post('api/deletetag', async (ctx, next) => {
   const name = 'huchangfa123'
   const id = ctx.request.body.id
   const tag = ctx.request.body.tag
-  console.log('id:' + id)
-  console.log('tag:' + tag)
-  // const id = '58db781eb21bca36ee9eeb1a'
-  // const tag = 'javascript'
+  // console.log('id:' + id)
+  // console.log('tag:' + tag)
+  // const id = '58e4d273236de726081b332b'
+  // const tag = 'koa'
   await getAuthData.deletetag(id, name, tag)
   ctx.body = {
     success: true,
@@ -116,9 +121,9 @@ router.get('api/getrecenttag', async(ctx, next) => {
 })
 
 // 根据标签获取项目信息
-router.get('api/taggetpj', async(ctx, next) => {
+router.post('api/taggetpj', async(ctx, next) => {
   const user = 'huchangfa123'
-  const tag = 'youli'
+  const tag = ctx.request.body.tag
   const result = await getAuthData.getpjBytag(user, tag)
   ctx.body = {
     success: true,

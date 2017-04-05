@@ -122,7 +122,7 @@ exports.getstar = async (username) => {
 }
 
 // 设置项目的标签
-exports.settag = async (id, name, ntag) => {
+exports.settag = async (id, name, ntag, color) => {
   // 找出项目对应的tag列表
   const result = await Model.Tags.find({
     StarpjId: id,
@@ -137,7 +137,10 @@ exports.settag = async (id, name, ntag) => {
     if (!checkSame) {
       await Model.Tags.update({StarpjId: id, UserName: name}, {
         $push: {
-          'TagList': {TagName: ntag}
+          'TagList': {
+            TagName: ntag,
+            TagColor: color
+          }
         }
       })
     }
@@ -149,12 +152,36 @@ exports.settag = async (id, name, ntag) => {
   if (userresult) {
     let checkSam = false
     for (let i = 0; i < userresult[0].taglist.length; i++) {
-      if (userresult[0].taglist[i].TagName === ntag) { checkSam = true }
+      if (userresult[0].taglist[i].TagName === ntag) {
+        checkSam = true
+        const times = userresult[0].taglist[i].UseTimes
+        await Model.User.update({name: name}, {
+          $pull: {
+            'taglist': {
+              TagName: ntag,
+              UseTimes: times
+            }
+          }
+        })
+        const ntimes = times + 1
+        await Model.User.update({name: name}, {
+          $push: {
+            'taglist': {
+              TagName: ntag,
+              UseTimes: ntimes
+            }
+          }
+        })
+        break
+      }
     }
     if (!checkSam) {
       await Model.User.update({name: name}, {
         $push: {
-          'taglist': {TagName: ntag}
+          'taglist': {
+            TagName: ntag,
+            UseTimes: 1
+          }
         }
       })
     }
@@ -183,6 +210,7 @@ exports.gettag = async(id, name, pjname) => {
 
 // 删除项目标签
 exports.deletetag = async(id, name, tag) => {
+  // 删除tag表中的标签
   await Model.Tags.update({
     UserName: name,
     StarpjId: id
@@ -192,13 +220,38 @@ exports.deletetag = async(id, name, tag) => {
     }
   })
 
-  await Model.User.update({name: name}, {
-    $pull: {
-      'taglist': {
-        TagName: tag
+// 删除user中的标签
+  const userresult = await Model.User.find({
+    name: name
+  })
+
+  if (userresult) {
+    for (let i = 0; i < userresult[0].taglist.length; i++) {
+      if (userresult[0].taglist[i].TagName === tag) {
+        const times = userresult[0].taglist[i].UseTimes
+        await Model.User.update({name: name}, {
+          $pull: {
+            'taglist': {
+              TagName: tag,
+              UseTimes: times // mongo的default会一直default，不能更改
+            }
+          }
+        })
+        const ntimes = times - 1
+        if (ntimes !== 0) {
+          await Model.User.update({name: name}, {
+            $push: {
+              'taglist': {
+                TagName: tag,
+                UseTimes: ntimes
+              }
+            }
+          })
+        }
+        break
       }
     }
-  })
+  }
 }
 
 // 获取用户标签
@@ -232,18 +285,32 @@ exports.getrecenttag = async(name) => {
 // 根据标签获取项目
 exports.getpjBytag = async(name, tag) => {
   let result = []
-  const allpj = await Model.Tags.find({
+  const Tagallpj = await Model.Tags.find({
     UserName: name
   })
-  console.log(allpj)
-  for (let i = 0; i < allpj.length; i++) {
-    for (let j = 0; j < allpj[i].TagList.length; j++) {
-      if (allpj[i].TagList[j].TagName === tag) {
-        result.push({
-          pjname: allpj[i].PjName,
-          pjtags: allpj[i].TagList
-        })
-        break
+  const allpjData = await Model.Stars.find({
+    user: name
+  })
+  let count = 0
+  for (let i = 0; i < Tagallpj.length; i++) {
+    for (let j = 0; j < Tagallpj[i].TagList.length; j++) {
+      if (Tagallpj[i].TagList[j].TagName === tag) {
+        for (let k = 0; k < allpjData[0].Starlist.length; k++) {
+          if (allpjData[0].Starlist[k].pjname === Tagallpj[i].PjName) {
+            result.push({
+              pjname: Tagallpj[i].PjName,
+              tag: Tagallpj[i].TagList,
+              language: allpjData[0].Starlist[k].language,
+              stargazers: allpjData[0].Starlist[k].stargazers,
+              intro: allpjData[0].Starlist[k].intro,
+              url: allpjData[0].Starlist[k].pjurl,
+              index: count,
+              id: allpjData[0].Starlist[k]._id
+            })
+            count++
+            break
+          }
+        }
       }
     }
   }
