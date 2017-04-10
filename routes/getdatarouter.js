@@ -31,6 +31,7 @@ router.post('api/getstar', async (ctx, next) => {
   // 获取用户信息，datalogin为用户名
   const data = await getAuthData.getUser(token)
   const username = data.login
+  const avatarUrl = data.avatar_url
   // 更新star项目表
   await getAuthData.updatestar(username)
   // 获取star项目表
@@ -43,9 +44,11 @@ router.post('api/getstar', async (ctx, next) => {
     const tag = await getAuthData.gettag(id, username, pjname)
     result.push({
       pjname: tag.PjName,
+      secname: stars[0].Starlist[i].secname,
       tag: tag.TagList,
       language: stars[0].Starlist[i].language,
       stargazers: stars[0].Starlist[i].stargazers,
+      personalintro: stars[0].Starlist[i].intro,
       intro: stars[0].Starlist[i].intro,
       url: stars[0].Starlist[i].pjurl,
       index: i,
@@ -54,6 +57,10 @@ router.post('api/getstar', async (ctx, next) => {
   }
   ctx.body = {
     success: true,
+    userMessage: {
+      username,
+      avatarUrl
+    },
     data: {
       result
     }
@@ -129,6 +136,22 @@ router.post('api/taggetpj', async(ctx, next) => {
     success: true,
     data: {
       result
+    }
+  }
+})
+
+router.post('api/setsecnameandintro', async(ctx, next) => {
+  const user = 'huchangfa123'
+  const id = ctx.request.body.id
+  const secname = ctx.request.body.secname
+  const personalintro = ctx.request.body.personalintro
+  // const id = '58ea283cb14ae43dcef84476'
+  // const secname = '网页编辑文本器2'
+  await getAuthData.setsecnameandintro(user, id, secname, personalintro)
+  ctx.body = {
+    success: true,
+    data: {
+      secname
     }
   }
 })

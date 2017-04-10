@@ -1,5 +1,6 @@
 const req = require('request-promise')
 const Model = require('../lib/databaseModel')
+const mongoose = require('mongoose')
 
 // 授权获取access_token
 exports.getToken = async (code) => {
@@ -102,9 +103,11 @@ exports.updatestar = async (username) => {
           $push: {
             'Starlist': {
               pjname: stars[i].name,
+              secname: '',
               language: stars[i].language,
               stargazers: stars[i].stargazers_count,
               intro: stars[i].description,
+              personalintro: '',
               pjurl: stars[i].html_url
             }
           }
@@ -269,12 +272,13 @@ exports.getrecenttag = async(name) => {
     name: name
   })
   const result = []
-  let count = 5
+  let count = 10
   for (let i = allresult.taglist.length - 1; i >= 0; i--) {
     // console.log(allresult.taglist[i])
     result.push({
-      index: count % 5,
-      tagname: allresult.taglist[i].TagName
+      index: count % 10,
+      tagname: allresult.taglist[i].TagName,
+      tagusestime: allresult.taglist[i].UseTimes
     })
     count--
     if (count === 0) break
@@ -299,10 +303,12 @@ exports.getpjBytag = async(name, tag) => {
           if (allpjData[0].Starlist[k].pjname === Tagallpj[i].PjName) {
             result.push({
               pjname: Tagallpj[i].PjName,
+              secname: allpjData[0].Starlist[k].secname,
               tag: Tagallpj[i].TagList,
               language: allpjData[0].Starlist[k].language,
               stargazers: allpjData[0].Starlist[k].stargazers,
               intro: allpjData[0].Starlist[k].intro,
+              personalintro: allpjData[0].Starlist[k].personalintro,
               url: allpjData[0].Starlist[k].pjurl,
               index: count,
               id: allpjData[0].Starlist[k]._id
@@ -315,4 +321,17 @@ exports.getpjBytag = async(name, tag) => {
     }
   }
   return result
+}
+
+// 设置项目的别名和备注信息
+exports.setsecnameandintro = async (name, id, secname, perintro) => {
+  const allpj = await Model.Stars.findOne({user: name})
+  for (let i = 0; i < allpj.Starlist.length; i++) {
+    const nid = allpj.Starlist[i]._id + ''
+    if (nid === id) {
+      allpj.Starlist[i].secname = secname
+      allpj.Starlist[i].personalintro = perintro
+      allpj.save()
+    }
+  }
 }
